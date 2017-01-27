@@ -4,17 +4,18 @@
 
 void Loop(){
 
-	const Double_t THRESHOLD = -1.0e-3; //Volt
+	const Double_t THRESHOLD = -1.0e-2; //Volt
+	const Int_t BIN_NUM = 10000;
 
 
 	//Init
-	TString header = "./data/coin_";
+	TString header = "./data/yjsn_";
 	TString footer = "_ch1.root";
 	stringstream ss;
 	Int_t fileNumber=0;
 	ss << header << fileNumber << footer;
 
-	TH1D* histCharge = new TH1D("charge","charge",1000,-0.2e-9,0.1e-9);
+	TH1D* histCharge = new TH1D("charge","charge",10000,-1.0e-12,100.0e-12);
 
 	// Loop
 	while(TFile* f1 = TFile::Open(ss.str().c_str())){
@@ -26,23 +27,25 @@ void Loop(){
 
 		//define baseline
 		Double_t baseline;
-		for(int i=0;i<1000;++i){
+		for(int i=0;i<(BIN_NUM/10);++i){
 			baseline += y[i];
 		}
-		baseline /= 1000.0;
+		baseline /= (BIN_NUM/10);
 		
 		Double_t integral = 0;
-		for(int i=0;i<10000;++i){
+		for(int i=0;i<BIN_NUM;++i){
 			if((y[i]-baseline)<THRESHOLD) integral += y[i]-baseline;
 		}
 
-		histCharge->Fill(integral *= (4.0e-10/50.0) ); //50.0 Ohm
+		histCharge->Fill( TMath::Abs(integral *= (4.0e-10/50.0) )); //50.0 Ohm
 
 		// prepare for next loop
 		ss.str("");
 		ss.clear(stringstream::goodbit);
 		++fileNumber;
 		ss << header << fileNumber << footer;
+		delete g1;
+		delete f1;
 	}
 	histCharge->SetTitle("Charge;C;count");
 	histCharge->Draw();
